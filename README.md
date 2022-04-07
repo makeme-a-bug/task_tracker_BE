@@ -1,12 +1,12 @@
 # task_tracker_BE
-## Steps to star the project locally 
+## Steps to start the project locally 
  * python manage.py makemigrations account
  * python manage.py migrate
  * python manage.py makemigrations tasks projects
  * python manage.py migrate
  * python manage.py create_permissions
 
-## To  run the porject
+## To run the porject
  * python manage.py runserver
 ## To create super user
  * python manage.py createsuperuser

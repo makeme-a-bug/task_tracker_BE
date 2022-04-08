@@ -11,10 +11,9 @@ app_name = "users"
 router = routers.SimpleRouter()
 
 router.register(r'user',vw.UserViewSet,basename = "users")
-router.register(r'team',vw.TeamViewSet,basename = "teams")
 
 urlpatterns = [
-    path('api-token-auth/', views.obtain_auth_token)
+    path('api-token-auth/', vw.CustomAuthToken.as_view())
 ]
 
 urlpatterns += router.urls

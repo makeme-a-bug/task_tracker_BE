@@ -6,8 +6,8 @@ from account.models import User
 
 import nanoid
 
-def getID():
-    return str(nanoid.generate(size=10))
+def getID(num=10):
+    return str(nanoid.generate(size=num))
 
 def getCurrentUnixTime():
     return timezone.now().timestamp()
@@ -23,7 +23,7 @@ PRIORITY = (("nr","Normal"),("md","Medium"),("hg","High"))
 #add sub status like active,onhold ,done
 class Task(models.Model):
     id = models.CharField(max_length=15 , unique=True , primary_key=True , editable=False)
-    user = models.ForeignKey(User , on_delete=models.CASCADE)
+    user = models.ForeignKey(User , on_delete=models.SET_NULL,editable=False,null=True, blank=True)
     assigne = models.ManyToManyField(User, related_name="assigne",blank=True)
     title = models.CharField(max_length=100)
     priority = models.CharField(max_length=3 , default="nl")
@@ -37,12 +37,20 @@ class Task(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.id:
-            self.id = self.project.title[:2]+self.project.title[-2:]+"_"+ str(len(Task.objects.all())+1)
+            self.id = self.project.title[:2]+self.project.title[-2:]+"_"+ getID(10)
+            print(self.id)
             print("ok")
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        unique_together = ('id', 'project')
+        
+
 class Issue (models.Model):
-    user = models.ForeignKey(User , on_delete=models.CASCADE)
+    user = models.ForeignKey(User ,on_delete=models.SET_NULL,editable=False,null=True, blank=True)
     id = models.CharField(max_length=15 , unique=True , primary_key=True ,default=getID, editable=False)
     title = models.CharField(max_length=100)
     description = models.TextField()
@@ -52,7 +60,7 @@ class Issue (models.Model):
 
 
 class Comment (models.Model):
-    user = models.ForeignKey(User , on_delete=models.CASCADE)
+    user = models.ForeignKey(User ,on_delete=models.SET_NULL,editable=False,null=True, blank=True)
     id= models.CharField(max_length=15 , unique=True , primary_key=True ,default=getID, editable=False)
     comment = models.TextField()
     created_on = models.FloatField(default = getCurrentUnixTime)
@@ -60,10 +68,10 @@ class Comment (models.Model):
         abstract = True
 
 class TaskComment(Comment):
-    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE,editable=False)
 
 class IssueComment(Comment):
-    issue = models.ForeignKey(Issue, on_delete=models.CASCADE)
+    issue = models.ForeignKey(Issue, on_delete=models.CASCADE,editable=False)
 
 
 

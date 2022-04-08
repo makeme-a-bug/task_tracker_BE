@@ -1,7 +1,8 @@
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser, BaseUserManager
-
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 import nanoid
 
@@ -49,32 +50,17 @@ class UserManager(BaseUserManager):
         return self._create_user(email, password, **extra_fields)
 
 
+
+
 class User(AbstractUser):
     """User model."""
     
     id = models.CharField(max_length=15 , unique=True , primary_key=True ,default=getID)
     username = None
     email = models.EmailField('email address', unique=True)
-    role = models.CharField(max_length=25 , choices =account_role , default="admin")
-    type = models.CharField(max_length=25 , choices =account_type , default="basic")
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     objects = UserManager()
 
-
-
-
-
-
-class Team(models.Model):
-    name = models.CharField(max_length=100, unique=True , primary_key=True)
-    user = models.ForeignKey(User , on_delete = models.CASCADE)
-    head = models.ForeignKey(User , on_delete= models.DO_NOTHING, related_name='head')
-    members = models.ManyToManyField(User, related_name='members')
-    created_on = models.FloatField(default=getCurrentUnixTime)
-    description = models.TextField()
-
-    class Meta:
-        unique_together = ('user', 'name')
 

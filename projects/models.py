@@ -3,7 +3,7 @@ from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from account.models import User , Team
+from account.models import User
 import nanoid
 
 def getID():
@@ -18,11 +18,10 @@ class Project(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
     created_on = models.FloatField(default=getCurrentUnixTime, editable=False)
-    teams = models.ManyToManyField(Team, related_name="account_team" , blank=True )
     members = models.ManyToManyField(User , related_name="project_members", blank=True)
 
-    # class Meta:
-    #     unique_together = ('title', 'user')
+    class Meta:
+        unique_together = ('title', 'user')
 
 class Status(models.Model):
     id = models.CharField(max_length=15 , unique=True , primary_key=True ,default=getID, editable=False)
@@ -33,7 +32,33 @@ class Status(models.Model):
 
     class Meta:
         unique_together = ('project', 'name')
-        
+
+
+class Permission(models.Model):
+    id = models.CharField(max_length=15 , unique=True , primary_key=True ,default=getID, editable=False)
+    codeName = models.TextField()
+    description = models.TextField()
+    model = models.TextField()
+
+    def __str__(self):
+        return self.codeName+" | "+self.model
+
+class Role(models.Model):
+    id = models.CharField(max_length=15 , unique=True , primary_key=True ,default=getID, editable=False)
+    name = models.CharField(max_length=50)
+    description = models.TextField()
+    color = models.CharField(max_length=10,default="#dddddd")
+    project = models.ForeignKey(Project,on_delete=models.CASCADE)
+    users = models.ManyToManyField(User, blank=True)
+    deletable = models.BooleanField(default=True , editable=False)
+    permissions = models.ManyToManyField(Permission, blank=True)
+    class Meta:
+        unique_together = ('project', 'name')
+
+    def __str__(self):
+        return self.name+" "+self.project.title
+
+
 @receiver(post_save, sender=Project)
 def create_status(sender, instance, created, **kwargs):
 
@@ -41,4 +66,9 @@ def create_status(sender, instance, created, **kwargs):
     if created:
         for s in STATUS:
             Status.objects.create(name = s['name'] , color=s['color'] , project = instance)
-    
+        R = Role.objects.create(name="Creator",description="Creator of the project",color="#44AF69",project=instance,deletable=False)
+        R.permissions.add(*list(Permission.objects.all()))
+        R.users.add(instance.user)
+        instance.members.add(instance.user)
+        instance.save()
+

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import User,Team
+from .models import User
 
 
 @admin.register(User)
@@ -11,7 +11,6 @@ class UserAdmin(DjangoUserAdmin):
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        (_("Account"),{'fields': ('account_type',)}),
         (_('Personal info'), {'fields': ('first_name', 'last_name')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser',
                                        'groups', 'user_permissions')}),
@@ -28,4 +27,3 @@ class UserAdmin(DjangoUserAdmin):
     ordering = ('email',)
 
 # Register your models here.
-admin.site.register(Team)

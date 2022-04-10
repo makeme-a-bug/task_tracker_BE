@@ -3,15 +3,22 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework import filters
 
 from pagination.pagination import response_with_paginator
+
 from account.models import User
 from projects.models import Project
-from .serializer import ReadonlyTaskSerializer , WriteOnlyTaskSerializer , IssueSerializer , TaskCommentSerializer , IssueCommentSerializer
+from .serializer import ReadOnlyTaskSerializer , WriteOnlyTaskSerializer , ReadOnlyIssueSerializer , WriteOnlyIssueSerializer , WriteOnlyTaskCommentSerializer, ReadOnlyTaskCommentSerializer  , WriteOnlyIssueCommentSerializer, ReadOnlyIssueCommentSerializer
 from .models import Task, Issue , TaskComment , IssueComment
 from .permissions import TaskPermission
+
 from django.db.models import Q
+
+from django_filters.rest_framework import DjangoFilterBackend
 class TasksViewSet(viewsets.ModelViewSet):
+    filterset_fields = ['assigne__id']
+    search_fields = ['title','description']
 
     def get_permissions(self):
         
@@ -28,7 +35,7 @@ class TasksViewSet(viewsets.ModelViewSet):
         if self.action in ['create','update','partial_update']:
             serializer_class = WriteOnlyTaskSerializer
         else:
-            serializer_class = ReadonlyTaskSerializer
+            serializer_class = ReadOnlyTaskSerializer
         return serializer_class
 
     def perform_create(self, serializer):
@@ -45,17 +52,18 @@ class TasksViewSet(viewsets.ModelViewSet):
         return user , project
 
     
-    # custom action class to get individual tasks of a user the tasks are considered to be the user's tasks that the user is assigned to
-    @action(methods=['get'] , detail=False)
-    def individualTasks(self, request,*args,**kwargs):
-        user,project = self.get_user_project()
-        queryset = self.get_queryset().filter(assigne__id=user.id)
-        return response_with_paginator(self, queryset)
+    
     
 
 class IssueViewSet(viewsets.ModelViewSet):
+    search_fields = ['title','description','status']
 
-    serializer_class = IssueSerializer
+    def get_serializer_class(self):
+        if self.action in ['create','update','partial_update']:
+            serializer_class = WriteOnlyIssueSerializer
+        else:
+            serializer_class = ReadOnlyIssueSerializer
+        return serializer_class
 
     def get_queryset(self,*args, **kwargs):
         _,task = self.get_user_task()
@@ -71,14 +79,20 @@ class IssueViewSet(viewsets.ModelViewSet):
         serializer.save(task = task)
     
     def get_user_task(self):
-        user = User.objects.get(email = "admin@gmail.com")
+        user = self.request.user
         task = Task.objects.get(id = self.request.parser_context['kwargs'].get('task',None))
         return user , task
 
 
 class TaskCommentViewSet(viewsets.ModelViewSet):
-    serializer_class = TaskCommentSerializer
+    search_fields = ['comment']
 
+    def get_serializer_class(self):
+        if self.action in ['create','update','partial_update']:
+            serializer_class = WriteOnlyTaskCommentSerializer
+        else:
+            serializer_class = ReadOnlyTaskCommentSerializer
+        return serializer_class
 
     def get_queryset(self,*args, **kwargs):
         task = self.request.parser_context['kwargs'].get('task',None)
@@ -94,12 +108,19 @@ class TaskCommentViewSet(viewsets.ModelViewSet):
         serializer.save(user=user,task = task)
     
     def get_user_task(self):
-        user = User.objects.get(email = "admin@gmail.com")
+        user = self.request.user
         task = Task.objects.get(id = self.request.parser_context['kwargs'].get('task',None))
         return user , task
 
 class IssueCommentViewSet(viewsets.ModelViewSet):
-    serializer_class = IssueCommentSerializer
+    search_fields = ['comment']
+
+    def get_serializer_class(self):
+        if self.action in ['create','update','partial_update']:
+            serializer_class = WriteOnlyIssueCommentSerializer
+        else:
+            serializer_class = ReadOnlyIssueCommentSerializer
+        return serializer_class
 
     def get_queryset(self,*args, **kwargs):
         issue = self.request.parser_context['kwargs'].get('issue',None)

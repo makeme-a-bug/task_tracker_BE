@@ -2,6 +2,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 
+#issue: shows all pages when page_size is set to 0
 class CustomPageNumberPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
 

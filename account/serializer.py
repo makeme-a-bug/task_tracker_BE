@@ -5,10 +5,18 @@ from projects.serializer import RoleSerializerDepth
 
 
 class UserSerializer(serializers.ModelSerializer):
-    role_set = RoleSerializerDepth(many=True)
+    role_set = serializers.SerializerMethodField()
+    
+    def get_role_set(self,obj):
+        if self.context.get('project',None):
+            data = RoleSerializerDepth(obj.role_set.filter(project_id = self.context.get('project')),many=True).data
+            return data
+        return None
     class Meta:
         model = User
         exclude=["password"]
+
+    
 
 
 

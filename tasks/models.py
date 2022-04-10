@@ -20,7 +20,7 @@ TASK_TYPE = (("mn","Main task"),("sub","Sub task"))
 
 PRIORITY = (("nr","Normal"),("md","Medium"),("hg","High"))
 
-#add sub status like active,onhold ,done
+#add sub status like active, onhold , done
 class Task(models.Model):
     id = models.CharField(max_length=15 , unique=True , primary_key=True , editable=False)
     user = models.ForeignKey(User , on_delete=models.SET_NULL,editable=False,null=True, blank=True)
@@ -38,8 +38,6 @@ class Task(models.Model):
     def save(self, *args, **kwargs):
         if not self.id:
             self.id = self.project.title[:2]+self.project.title[-2:]+"_"+ getID(10)
-            print(self.id)
-            print("ok")
         super().save(*args, **kwargs)
 
     def __str__(self):

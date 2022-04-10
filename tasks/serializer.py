@@ -4,12 +4,7 @@ from rest_framework import serializers
 from .models import Task , Issue , TaskComment , IssueComment
 from projects.serializer import StatusSerializer
 
-class ReadonlyTaskSerializer(serializers.ModelSerializer):
-    status = StatusSerializer(read_only = True)
-    class Meta:
-        model = Task
-        fields = "__all__"
-        depth = 1
+
 
 class WriteOnlyTaskSerializer(serializers.ModelSerializer):
 
@@ -18,22 +13,62 @@ class WriteOnlyTaskSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ['user','project']
 
-class IssueSerializer(serializers.ModelSerializer):
+# issue serialziers
+class WriteOnlyIssueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Issue
         fields = "__all__"
         read_only_fields = ['user','task']
 
 
-class TaskCommentSerializer(serializers.ModelSerializer):
+
+class ReadOnlyIssueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Issue
+        fields = "__all__"
+        read_only_fields = ['user','task']
+        depth=1
+
+#--------------------------------------------
+# task comment serializers
+
+class ReadOnlyTaskCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = TaskComment
         fields = "__all__"    
         read_only_fields = ['user','task']
+        depth=1
 
+class WriteOnlyTaskCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TaskComment
+        fields = "__all__"    
+        read_only_fields = ['user','task']
+        depth=1
 
-class IssueCommentSerializer(serializers.ModelSerializer):
+#-----------------------------------------------
+
+# issue comment serializers
+
+class WriteOnlyIssueCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = IssueComment
         fields = "__all__"
         read_only_fields = ['user','issue']
+
+
+class ReadOnlyIssueCommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IssueComment
+        fields = "__all__"
+        read_only_fields = ['user','issue']
+        depth = 1
+class ReadOnlyTaskSerializer(serializers.ModelSerializer):
+    status = StatusSerializer(read_only = True)
+    taskcomment_set = ReadOnlyTaskCommentSerializer(read_only=True , many=True)
+    issue_set = ReadOnlyIssueSerializer(read_only=True , many=True)
+    
+    class Meta:
+        model = Task
+        fields = "__all__"
+        depth = 1

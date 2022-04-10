@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import filters
 
 from .serializer import ProjectSerializer,StatusSerializer,RoleSerializer,PermissionSerializer
-from account.serializer import UserSerializer
+from account.serializer import ReadOnlyUserSerializer
 from .models import Project,Status,Role,Permission
 from account.models import User
 from django.db.models import Q
@@ -39,7 +39,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         search = request.query_params.get('search','')
         project = Project.objects.get(id=pk)
         members = project.members.filter(Q(email__icontains = search)| Q(first_name__icontains = search) | Q(last_name__icontains = search))
-        serializer = UserSerializer(members, many=True,context={'project':project.id})
+        serializer = ReadOnlyUserSerializer(members, many=True,context={'project':project.id})
         return Response(serializer.data)
 
     
@@ -105,7 +105,7 @@ class RoleViewSet(viewsets.ModelViewSet):
         elif request.method == 'DELETE':
             user.role_set.remove(role)
 
-        serializer = UserSerializer(user,context={'project':role.project.id})
+        serializer = ReadOnlyUserSerializer(user,context={'project':role.project.id})
         return Response(serializer.data)
 
     def get_queryset(self,*args, **kwargs):

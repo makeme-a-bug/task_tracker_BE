@@ -22,7 +22,7 @@ class TasksViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         
-        self.permission_classes = [TaskPermission]
+        self.permission_classes += [TaskPermission]
 
         return super(TasksViewSet, self).get_permissions()
 

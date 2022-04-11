@@ -23,6 +23,7 @@ class UserViewSetTestCase(APITestCase):
         cls.signup_url = reverse('users:users-signup')
         cls.login_url = reverse('users:users-login')
         cls.list_url = reverse('users:users-list')
+        cls.set_password_url = 'users:users-detail'
         cls.get_url = 'users:users-detail'
         cls.faker_obj = Faker()
 
@@ -32,7 +33,6 @@ class UserViewSetTestCase(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # self.assertEqual(len(response.data), 2)
 
     def test_list_with_no_admin_authorization(self):
         token,created = Token.objects.get_or_create(user=User.objects.get(email=self.user_saved.email))
@@ -41,14 +41,63 @@ class UserViewSetTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         # self.assertEqual(len(response.data), 2)
 
+    def test_retreieve(self):
+        token,created = Token.objects.get_or_create(user=User.objects.get(email=self.user_saved.email))
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        response = self.client.get(reverse(self.get_url, kwargs={'pk': self.user_saved.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_retreieve_with_admin(self):
+        token,created = Token.objects.get_or_create(user=User.objects.get(email=self.admin_user.email))
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        response = self.client.get(reverse(self.get_url, kwargs={'pk': self.user_saved.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_retreieve_invalid(self):
+        token,created = Token.objects.get_or_create(user=User.objects.get(email=self.user_saved.email))
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        response = self.client.get(reverse(self.get_url, kwargs={'pk': self.admin_user.id}))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update(self):
+        token,created = Token.objects.get_or_create(user=User.objects.get(email=self.user_saved.email))
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+
+        update_dict = {
+            "first_name":self.faker_obj.first_name(),
+            "last_name":self.faker_obj.last_name(),
+        }
+        response = self.client.patch(reverse(self.get_url, kwargs={'pk': self.user_saved.id}),update_dict)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['first_name'], update_dict['first_name'])
+        self.assertEqual(response.data['last_name'], update_dict['last_name'])
+
+    def test_update_invalid(self):
+        token,created = Token.objects.get_or_create(user=User.objects.get(email=self.user_saved.email))
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+
+        update_dict = {
+            "first_name":self.faker_obj.first_name(),
+            "last_name":self.faker_obj.last_name(),
+        }
+        response = self.client.patch(reverse(self.get_url, kwargs={'pk': self.admin_user.id}),update_dict)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    
+
     def test_if_data_is_correct_then_login(self):
+        pwd = "lamo124"
+        user = User.objects.get(email=self.user_saved.email)
+        user.set_password(pwd)
+        user.save()
 
         login_dict = {
             'email': self.user_saved.email,
-            'password': self.user_saved.password,
+            'password': pwd,
         }
 
         response = self.client.post(self.login_url,  login_dict)
+
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -164,3 +213,15 @@ class UserViewSetTestCase(APITestCase):
         # Check that there is only one user with the saved username
         username_query = User.objects.filter(email=self.user_saved.email)
         self.assertEqual(username_query.count(), 1)
+
+    def test_set_password(self):
+        token,created = Token.objects.get_or_create(user=User.objects.get(email=self.user_saved.email))
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+        pass_dict = {
+            "password":self.faker_obj.password(),
+        }
+        response = self.client.post(reverse('users:users-set-password', kwargs={'pk': self.user_saved.id}),pass_dict)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.client.credentials()
+        response = self.client.post(self.login_url,  {'email': self.user_saved.email, 'password':pass_dict['password']})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

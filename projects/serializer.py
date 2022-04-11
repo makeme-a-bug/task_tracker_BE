@@ -11,13 +11,17 @@ class StatusSerializer(serializers.ModelSerializer):
         read_only_fields=['project']
 
 
-class ProjectSerializer(serializers.ModelSerializer):
+class ReadOnlyProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = "__all__"
         read_only_fields=['user']
         depth=1
-
+class WriteOnlyProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = "__all__"
+        read_only_fields=['user']
 class PermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permission

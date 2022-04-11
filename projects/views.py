@@ -6,14 +6,18 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import filters
 
-from .serializer import ProjectSerializer,StatusSerializer,RoleSerializer,PermissionSerializer
+from .serializer import WriteOnlyProjectSerializer,ReadOnlyProjectSerializer,StatusSerializer,RoleSerializer,PermissionSerializer
 from account.serializer import ReadOnlyUserSerializer
 from .models import Project,Status,Role,Permission
 from account.models import User
 from django.db.models import Q
 class ProjectViewSet(viewsets.ModelViewSet):
-    serializer_class = ProjectSerializer
 
+    def get_serializer_class(self):
+        if self.action in ['create','update','partial_update']:
+            return WriteOnlyProjectSerializer
+        else:
+            return ReadOnlyProjectSerializer
 
     def get_queryset(self):
         user = self.get_user()
